@@ -19,11 +19,11 @@
 <body>
     <h1>Gender In Academia</h1>
     
-   <!-- <div id="discipline-selector"></div>     -->
+    <div id="discipline-selector"></div>
     
     <div id="gender-balance"></div>
     
-    <!--<div id="average-salary"></div>          -->
+    <div id="average-salary"></div>
     
 </body>
 </html>
