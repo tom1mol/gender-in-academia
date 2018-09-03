@@ -33,7 +33,7 @@ function show_gender_balance(ndx) {
         .transitionDuration(500)
         .x(d3.scale.ordinal())
         .xUnits(dc.units.ordinal)
-        .elasticY(true)
+        // .elasticY(true)
         .xAxisLabel("Gender")
         .yAxis().ticks(20);
 }

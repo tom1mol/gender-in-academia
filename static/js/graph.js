@@ -6,11 +6,14 @@ queue()                                                                 //to loa
 function makeGraphs(error, salaryData) {        //salaryData is a variable that data from csv file will be passed into by queue.js
     var ndx = crossfilter(salaryData);          //create crossfilter. 1 for whole dashboard and load salaryData into it
     
+    salaryData.forEach(function(d) {
+        d.salary = parseInt(d.salary);
+    })
     
     
     show_discipline_selector(ndx);      //pass this ndx as only argument
     show_gender_balance(ndx);       // we pass the ndx variable(crossfilter) to the function that will draw our graph
-    show_average_saleries(ndx);
+    show_average_salary(ndx);
     
     dc.renderAll();
 }  
@@ -21,7 +24,7 @@ function show_discipline_selector(ndx) {            // we call this from makeGra
     var dim = ndx.dimension(dc.pluck("discipline"));  //to create dimension we pluck discipline column from crossfilter
     var group = dim.group();
       
-      dc.selectMenu("#discipline-selector")       //selectMenu needs to be told the div to render in..#discipline-selector(CSS selector pointing)
+    dc.selectMenu("#discipline-selector")       //selectMenu needs to be told the div to render in..#discipline-selector(CSS selector pointing)
         .dimension(dim)
         .group(group);
     
@@ -83,7 +86,7 @@ function show_average_salary(ndx) {
         .width(400)
         .height(300)
         .margins({top: 10, right: 50, bottom: 30, left: 50})
-        .dimensions(dim)
+        .dimension(dim)
         .group(averageSalaryByGender)  //created using custom reducer
         .valueAccessor(function(d) {
             return d.value.average.toFixed(2);
