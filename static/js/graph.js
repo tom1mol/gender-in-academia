@@ -6,14 +6,19 @@ queue()                                                                 //to loa
 function makeGraphs(error, salaryData) {        //salaryData is a variable that data from csv file will be passed into by queue.js
     var ndx = crossfilter(salaryData);          //create crossfilter. 1 for whole dashboard and load salaryData into it
     
-    salaryData.forEach(function(d) {
-        d.salary = parseInt(d.salary);
+    salaryData.forEach(function(d) {            // convert salaries to integers using forEach
+        d.salary = parseInt(d.salary);          //salary = integer version of the salary
     })
     
     
     show_discipline_selector(ndx);      //pass this ndx as only argument
+    
+    show_percent_that_are_professors(ndx, "Female", "#percent-of-women-professors");   //generic function..not men/women specific
+    show_percent_that_are_professors(ndx, "Male", "#percent-of-men-professors"); //#percent-of-men-professors(ID of where we want data displayed. also for FEM above)
+    
     show_gender_balance(ndx);       // we pass the ndx variable(crossfilter) to the function that will draw our graph
     show_average_salary(ndx);
+    show_rank_distribution(ndx);
     
     dc.renderAll();
 }  
@@ -27,6 +32,46 @@ function show_discipline_selector(ndx) {            // we call this from makeGra
     dc.selectMenu("#discipline-selector")       //selectMenu needs to be told the div to render in..#discipline-selector(CSS selector pointing)
         .dimension(dim)
         .group(group);
+    
+}
+
+
+function show_percent_that_are_professors(ndx, gender, element) { //because 2 different divs(m/f) we pass in element where we want data plotted
+    var percentageThatAreProf = ndx.groupAll().reduce(
+        function (p, v) {
+            if (v.sex === gender) {         //this was originally "Female"
+                p.count++;
+                if (v.rank === "Prof") {                
+                    p.are_prof++;
+                }
+            }
+            return p;
+        },
+        function (p, v) {
+         if (v.sex === gender) {            //this was originally "Female"
+                p.count--;
+                if (v.rank === "Prof") {
+                    p.are_prof--;
+                }
+            }
+            return p;   
+        },
+        function() {
+            return {count: 0, are_prof: 0}; // count=total number of records encountered and 2nd argument that àre professors
+        }
+        
+    );
+    
+    dc.numberDisplay(element)           //this was previously ("#percentage-of-women-professors")changed it to element where we want num displayed
+        .formatNumber(d3.format(".2%"))   // show number as percentage to 2 decimal places..is a format number method to adjust how number is displayed
+        .valueAccessor(function (d) {       //valueAccessor because we used a custom reducer. values have count and are_prof parts
+            if (d.count == 0) {         //if count is 0..rtn 0
+                return 0;
+            } else {
+                return (d.are_prof / d.count);      //calculate % of overall count for are_prof
+            }
+        })
+        .group(percentageThatAreProf);      //originally (percentageFemaleThatAreProf)
     
 }
 
@@ -89,7 +134,7 @@ function show_average_salary(ndx) {
         .dimension(dim)
         .group(averageSalaryByGender)  //created using custom reducer
         .valueAccessor(function(d) {
-            return d.value.average.toFixed(2);
+            return d.value.average.toFixed(2);  //round it to 2 decimal places
         })  
         //need this because value being plotted is created by initialised function of custom reducer so has a count,total,avg. we use avg(above)
         .transitionDuration(500)
@@ -102,6 +147,81 @@ function show_average_salary(ndx) {
         
 }
 
+function show_rank_distribution(ndx) {          //splitting data by gender on this one
+    
+    /*
+    var dim = ndx.dimension(dc.pluck("sex"));
+    
+    var profByGender = dim.group().reduce(          // p= accumulator...keeps track of values. v= individual items being added
+        function (p, v) {           //total in add item always increment but match only increment if is professor
+            p.total++;                              // ADD
+            if(v.rank == "Prof") {
+                p.match++;
+            }
+            return p;
+        },
+        function (p, v) {
+             p.total--;                             //REMOVE
+            if(v.rank == "Prof") {
+                p.match--;
+            }
+            return p;
+        },
+        function () {   // initialise function takes no argument(p,v). creates the data structure that will be threaded through call to add/remove item
+            return {total: 0, match: 0};        //total= count/accumulator for number of rows. match= how many of the rows are professors
+        }
+    );
+    */
+    
+    
+    function rankByGender (dimension, rank) {       //nested function...
+        return dimension.group().reduce(          
+            function (p, v) {           
+                p.total++;                              // ADD
+                if(v.rank == rank) {
+                    p.match++;
+                }
+                return p;
+            },
+            function (p, v) {
+                 p.total--;                             //REMOVE
+                if(v.rank == rank) {
+                    p.match--;
+                }
+                return p;
+            },
+            function () {   // 
+                return {total: 0, match: 0};        
+            }
+        );
+    }
+    var dim = ndx.dimension(dc.pluck("sex"));
+    var profByGender = rankByGender(dim, "Prof"); 
+    var asstProfByGender = rankByGender(dim, "AsstProf");       //pass in a dimension and the rank we want to use for the reduce
+    var assocProfByGender = rankByGender(dim, "AssocProf"); 
+    
+    
+    console.log(profByGender.all());
+    
+    dc.barChart("#rank-distribution")
+        .width(400)
+        .height(300)
+        .dimension(dim)
+        .group(profByGender, "Prof")
+        .stack(asstProfByGender, "Asst Prof")
+        .stack(assocProfByGender, "Assoc Prof")
+        .valueAccessor(function (d){                             //need this because we used a custom reducer for this chart
+            if(d.value.total > 0) {                                     //total==total number of men/women found
+                return (d.value.match / d.value.total) * 100;       //match== number that are prof, assocProf etc. find what % of total is the match
+            } else {                        //could have put this calc in custom reducer as 3rd property in data structure created by initialize function
+                return 0;
+            }
+        })
+        .x(d3.scale.ordinal())
+        .xUnits(dc.units.ordinal)
+        .legend(dc.legend().x(320).y(20).itemHeight(15).gap(5))
+        .margins({top: 10, right: 100, bottom: 30, left: 30});
+}
 
 
 
