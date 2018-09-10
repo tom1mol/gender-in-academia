@@ -217,11 +217,17 @@ function show_rank_distribution(ndx) {          //splitting data by gender on th
 }
 
 function show_service_to_salary_correlation(ndx) {
-    var eDim = ndx.dimension(dc.pluck("yrs_service"));  // used to work out max/min of x-axis. eDim is a pluck on years of service
-    var experienceDim = ndx.dimension(function(d) {  // function to extract 2 pieces of info we need for plotting
-        return [d.yrs_service, d.salary];  //(used for x coordinate of the dot, used for y coordinate of dot)
+    
+    var genderColors = d3.scale.ordinal()
+        .domain(["Female", "Male"])
+        .range(["pink", "blue"]);
+    
+    
+    var eDim = ndx.dimension(dc.pluck("yrs_service"));  
+    var experienceDim = ndx.dimension(function(d) {  
+        return [d.yrs_service, d.salary, d.rank, d.sex];  
     });
-    var experienceSalaryGroup = experienceDim.group();  //dot on plot for each unique yrs_serv and salary combo
+    var experienceSalaryGroup = experienceDim.group();  
     
     var minExperience = eDim.bottom(1)[0].yrs_service;    //bottom 1 value
     var maxExperience = eDim.top(1)[0].yrs_service;     //top 1 value
@@ -229,15 +235,18 @@ function show_service_to_salary_correlation(ndx) {
     dc.scatterPlot("#service-salary")
         .width(800)
         .height(400)
-        .x(d3.scale.linear().domain([minExperience, maxExperience]))  //linear(no of yrs) range from min-max experience
-        .brushOn(false)   // changing this to true will allow us highlight dots on chart and filter remaining charts
+        .x(d3.scale.linear().domain([minExperience, maxExperience])) 
+        .brushOn(false)   
         .symbolSize(8)      //size of dots
         .clipPadding(10)   //leaves room near top if plot goes high
         .yAxisLabel("Years Of Service")
         .title(function(d) {        // appears when u hover mouse over dot
-            return "Earned " + d.key[1];    //tool tip appears with earned and the salary. key[1] relates to yrs of service+salary dimension created above
-                                            //if we had said key[0] it would have related to yrs of service. first item =0, 2nd item=1 etc
+            return d.key[2] + " earned " + d.key[1];    
         })
+        .colorAccessor(function(d) {
+            return d.key[3];
+        })
+        .colors(genderColors)
         .dimension(experienceDim)  //experienceDim...the dim that contains years of service and salary
         .group(experienceSalaryGroup)
         .margins({top: 10, right: 50, bottom: 75, left:75});
