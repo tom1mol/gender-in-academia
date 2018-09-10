@@ -65,7 +65,7 @@ function show_percent_that_are_professors(ndx, gender, element) {
                 return (d.are_prof / d.count);      
             }
         })
-        .group(percentageThatAreProf);      //originally (percentageFemaleThatAreProf)
+        .group(percentageThatAreProf)      //originally (percentageFemaleThatAreProf)
     
 }
 
