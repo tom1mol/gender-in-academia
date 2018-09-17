@@ -87,8 +87,8 @@ function show_gender_balance(ndx) {         //each graph has its own function. o
     var group = dim.group();        //count rows in data that have both genders
     
     dc.barChart("#gender-balance")  //div ID(gen-bal) comes into play. use CSS selector #gender-balance to indicate this chart is rendered in this div
-        .width(400)
-        .height(300)
+        .width(350)
+        .height(250)
         .margins({top: 10, right: 50, bottom:30, left: 50})
         .dimension(dim)
         .group(group)
@@ -134,8 +134,8 @@ function show_average_salary(ndx) {
     var averageSalaryByGender = dim.group().reduce(add_item, remove_item, initialise);  // for group we call the reduce function
     
     dc.barChart("#average-salary")
-        .width(400)
-        .height(300)
+        .width(350)
+        .height(250)
         .margins({top: 10, right: 50, bottom: 30, left: 50})
         .dimension(dim)
         .group(averageSalaryByGender)  //created using custom reducer
@@ -210,8 +210,8 @@ function show_rank_distribution(ndx) {          //splitting data by gender on th
     console.log(profByGender.all());
     
     dc.barChart("#rank-distribution")
-        .width(400)
-        .height(300)
+        .width(350)
+        .height(250)
         .dimension(dim)
         .group(profByGender, "Prof")
         .stack(asstProfByGender, "Asst Prof")
@@ -225,6 +225,7 @@ function show_rank_distribution(ndx) {          //splitting data by gender on th
         })
         .x(d3.scale.ordinal())
         .xUnits(dc.units.ordinal)
+        .xAxisLabel("Gender")
         .legend(dc.legend().x(320).y(20).itemHeight(15).gap(5))
         .margins({top: 10, right: 100, bottom: 30, left: 30});
 }

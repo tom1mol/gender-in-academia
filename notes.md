@@ -17,3 +17,11 @@ group.all();
 
 //this all went into chrome developer inspect all. wento to sources.. line 8 of graph.js and types the above in
 
+
+
+youtube links
+
+
+layout                              https://youtu.be/spyk9xHMNOM
+styling                             https://youtu.be/ZkljDMyOYq8  
+uniform resource location           https://youtu.be/RA-WlOsl5CA
