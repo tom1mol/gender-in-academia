@@ -8,7 +8,8 @@ function makeGraphs(error, salaryData) {        //salaryData is a variable that 
     
     salaryData.forEach(function(d) {            // convert salaries to integers using forEach
         d.salary = parseInt(d.salary);          //salary = integer version of the salary
-        d.yrs_service = parseInt(d["yrs.service"]);   //treat data as a number instead of a string
+        d.yrs_since_phd = parseInt(d["yrs.since.phd"]);   //treat data as a number instead of a string
+        d.yrs_service = parseInt(d["yrs.service"]);
     })
     
     
@@ -22,6 +23,8 @@ function makeGraphs(error, salaryData) {        //salaryData is a variable that 
     show_rank_distribution(ndx);
     
     show_service_to_salary_correlation(ndx);
+    show_phd_to_salary_correlation(ndx);
+    
     
     dc.renderAll();
 }  
@@ -268,6 +271,46 @@ function show_service_to_salary_correlation(ndx) {
         
 }
 
+function show_phd_to_salary_correlation(ndx) {
+    
+    var genderColors = d3.scale.ordinal()
+        .domain(["Female", "Male"])         //domain of values in a column..male/female
+        .range(["pink", "blue"]);                //range = range of colours that the values map to
+    
+    var pDim = ndx.dimension(dc.pluck("yrs_since_phd"));  // used to work out max/min of x-axis. eDim is a pluck on years of service
+    var phdDim = ndx.dimension(function(d) {  // function to extract 2 pieces of info we need for plotting
+        return [d.yrs_since_phd, d.salary, d.rank, d.sex];  //(used for x coordinate of the dot, used for y coordinate of dot)
+                                                            //include rank in tool tip when hover over dots
+    });
+    var phdSalaryGroup = phdDim.group();  //dot on plot for each unique yrs_serv and salary combo
+    
+    var minPhd = pDim.bottom(1)[0].yrs_since_phd;    //bottom 1 value
+    var maxPhd = pDim.top(1)[0].yrs_since_phd;     //top 1 value
+    
+    dc.scatterPlot("#phd-salary")
+        .width(800)
+        .height(400)
+        .x(d3.scale.linear().domain([minPhd, maxPhd]))  //linear(no of yrs) range from min-max experience
+        .brushOn(false)   // changing this to true will allow us highlight dots on chart and filter remaining charts
+        .symbolSize(8)      //size of dots
+        .clipPadding(10)   //leaves room near top if plot goes high
+        .yAxisLabel("Salary")
+        .xAxisLabel("Years Since Phd")
+        .title(function(d) {        // appears when u hover mouse over dot
+            return d.key[2] + " earned " + d.key[1];    //tool tip appears with earned and the salary. key[1] relates to yrs of service+salary dimension created above
+                                            //if we had said key[0] it would have related to yrs of service. first item =0, 2nd item=1 etc
+                                            //d.key[2] is d.rank above in var experienceDim
+        })
+        .colorAccessor(function(d) { //decides which piece of data we input to gender color scale
+            return d.key[3];       //d.key[3] is d.sex above in var experienceDim
+        })
+        .colors(genderColors)
+        
+        .dimension(phdDim)  //experienceDim...the dim that contains years of service and salary
+        .group(phdSalaryGroup)
+        .margins({top: 10, right: 50, bottom: 75, left:75});
+        
+}
 
 
 
